@@ -1,10 +1,11 @@
 import cv2
 import numpy as np
 
-from common_lab_utils import (Size)
+from common_lab_utils import (Size, visualize_matches)
 from sparse_stereo_matcher import (SparseStereoMatcher)
 from stereo_calibration import StereoCalibration
 from stereo_camera import (StereoCamera, CameraIndex, CaptureMode, LaserMode)
+
 
 def run_stereo_lab():
     laser_on = False
@@ -31,16 +32,16 @@ def run_stereo_lab():
     print("Press 'g' to toggle lines.")
     print("Press 'u' to toggle rectified/unrectified.")
     print("Press 'q' to quit.")
-    
+
     matching_win = "Stereo matching"
     depth_win = "Stereo depth"
     dense_win = "Dense disparity"
-    
+
     cv2.namedWindow('RealSense', cv2.WINDOW_AUTOSIZE)
     cv2.namedWindow(matching_win, cv2.WINDOW_AUTOSIZE)
     cv2.namedWindow(depth_win, cv2.WINDOW_AUTOSIZE)
     cv2.namedWindow(dense_win, cv2.WINDOW_AUTOSIZE)
-    
+
     while True:
         # Grab raw images
         stereo_raw = cam.get_stereo_pair()
@@ -53,7 +54,7 @@ def run_stereo_lab():
 
         # Visualize matched point correspondences
         match_image = visualize_matches(stereo_rectified, stereo_matcher);
-        cv::imshow(matching_win, match_image);
+        cv2.imshow(matching_win, match_image)
 
         # Visualise
         pair_raw = np.hstack((stereo_raw.left, stereo_raw.right))
@@ -66,8 +67,8 @@ def run_stereo_lab():
         # For rectified pair, these should coincide with the epipolar lines.
         if lines:
             for i in np.arange(50, viz.shape[0], 50):
-                cv2.line(viz, (0, i), (viz.shape[1], i), (0,0,65535))
-        
+                cv2.line(viz, (0, i), (viz.shape[1], i), (0, 0, 65535))
+
         cv2.imshow('RealSense', viz)
         key = cv2.waitKey(1)
         if key == ord('q'):
