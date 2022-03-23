@@ -37,26 +37,16 @@ class StereoPair:
         return iter((self.left, self.right))
 
 
-class DotDict(dict):
-    """
-    dot.notation access to dictionary attributes.
-
-    https://stackoverflow.com/a/23689767/14325545
-    """
-    __getattr__ = dict.get
-    __setattr__ = dict.__setitem__
-    __delattr__ = dict.__delitem__
+@dataclass
+class colours:
+    green = (0, 255, 0)
+    red = (0, 0, 255)
 
 
-colours = DotDict({
-    'green': (0, 255, 0),
-    'red': (0, 0, 255)
-})
-
-font = DotDict({
-    'face': cv2.FONT_HERSHEY_PLAIN,
-    'scale': 1.0
-})
+@dataclass
+class font:
+    face = cv2.FONT_HERSHEY_PLAIN
+    scale = 1.0
 
 
 def retain_best(keypoints, num_to_keep):
