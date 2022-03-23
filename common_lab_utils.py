@@ -1,3 +1,6 @@
+import numpy as np
+from dataclasses import dataclass
+
 class Size:
     """Represents image size"""
 
@@ -16,3 +19,12 @@ class Size:
     @property
     def height(self):
         return self._height
+    
+    @property
+    def as_cv_size(self):
+        return np.array((self._width, self._height), dtype=int)
+
+@dataclass
+class StereoPair:
+    left : np.ndarray
+    right : np.ndarray

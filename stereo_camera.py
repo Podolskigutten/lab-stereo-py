@@ -1,7 +1,7 @@
 import pyrealsense2 as rs2
 import numpy as np
 from enum import Enum, IntEnum, unique, auto
-from common_lab_utils import (Size)
+from common_lab_utils import (Size, StereoPair)
 
 @unique
 class CameraIndex(IntEnum):
@@ -37,26 +37,26 @@ class StereoCamera:
         print(f" product line: {device_product_line}")
         print(f" serial: {serial_number}")
 
-    def get_stereo_pair(self):
+    def get_stereo_pair(self) -> StereoPair:
         data = self._pipe.wait_for_frames()
         frame_1 = np.asanyarray(data.get_infrared_frame(int(CameraIndex.LEFT)).get_data())
         frame_2 = np.asanyarray(data.get_infrared_frame(int(CameraIndex.RIGHT)).get_data())
-        return frame_1, frame_2
+        return StereoPair(frame_1, frame_2)
     
     def get_stamped_stereo_pair(self):
         data = self._pipe.wait_for_frames()
         frame_1 = np.asanyarray(data.get_infrared_frame(int(CameraIndex.LEFT)).get_data())
         frame_2 = np.asanyarray(data.get_infrared_frame(int(CameraIndex.RIGHT)).get_data())
         usec_timestamp = data.get_frame_metadata(rs2.frame_metadata_value.frame_timestamp)
-        return frame_1, frame_2, usec_timestamp
+        return StereoPair(frame_1, frame_2), usec_timestamp
     
     def get_framerate(self, camera : CameraIndex):
         profile = self.get_video_stream_profile(camera)
         return profile.fps()
     
-    def get_resolution(self, camera : CameraIndex):
+    def get_resolution(self, camera : CameraIndex) -> Size:
         profile = self.get_video_stream_profile(camera)
-        return profile.width(), profile.height()
+        return Size(width=profile.width(), height=profile.height())
     
     def get_k_matrix(self, camera : CameraIndex):
         """bare for rs2.format.y8"""
