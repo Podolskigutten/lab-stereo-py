@@ -28,3 +28,10 @@ class Size:
 class StereoPair:
     left : np.ndarray
     right : np.ndarray
+
+def retain_best(keypoints, num_to_keep):
+    """Retains the given number of keypoints with highest response"""
+    num_to_keep = np.minimum(num_to_keep, len(keypoints))
+    best = np.argpartition([p.response for p in keypoints], -num_to_keep)[-num_to_keep:]
+    return best
+

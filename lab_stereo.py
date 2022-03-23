@@ -51,7 +51,9 @@ def run_stereo_lab():
         # Perform sparse matching.
         stereo_matcher.match(stereo_rectified)
 
-          # fixme Gjør resten
+        # Visualize matched point correspondences
+        match_image = visualize_matches(stereo_rectified, stereo_matcher);
+        cv::imshow(matching_win, match_image);
 
         # Visualise
         pair_raw = np.hstack((stereo_raw.left, stereo_raw.right))
