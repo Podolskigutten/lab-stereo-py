@@ -1,6 +1,6 @@
 import cv2
 import numpy as np
-from common_lab_utils import (Size, StereoPair, retain_best)
+from common_lab_utils import (Size, StereoPair, retain_best, colours)
 
 
 class SparseStereoMatcher:
@@ -11,24 +11,33 @@ class SparseStereoMatcher:
 
     def match(self, stereo_pair: StereoPair):
         """Detect and match keypoints in both images."""
-        n_grid_cols = stereo_pair.left.shape[1] // 16
-        n_grid_rows = stereo_pair.left.shape[0] // 16
-        grid_size = Size(n_grid_cols, n_grid_rows)
-        patch_width = 32
+        
+        # n_grid_cols = stereo_pair.left.shape[1] // 16
+        # n_grid_rows = stereo_pair.left.shape[0] // 16
+        # grid_size = Size(n_grid_cols, n_grid_rows)
+        # patch_width = 32
 
+        self._keypoints_left = None
+        self._keypoints_right = None
+        self._matches = None
+        self._point_disparities = None
         # Detect and describe features in the left image.
-        self._keypoints_left = self._detect_in_grid(stereo_pair.left, grid_size, 1, patch_width)
+        #self._keypoints_left = self._detect_in_grid(stereo_pair.left, grid_size, 1, patch_width)
+        self._keypoints_left = self._detector.detect(stereo_pair.left)
+        #self._keypoints_left = retain_best(self._keypoints_left, 25)
         self._keypoints_left, query_descriptors = self._desc_extractor.compute(stereo_pair.left, self._keypoints_left)
 
         # Detect and describe features in the right image.
-        self._keypoints_right = self._detect_in_grid(stereo_pair.right, grid_size, 1, patch_width)
-        self._keypoints_right, train_descriptors = self._desc_extractor.compute(stereo_pair.right,
-                                                                                self._keypoints_right)
+        # self._keypoints_right = self._detect_in_grid(stereo_pair.right, grid_size, 1, patch_width)
+        self._keypoints_right = self._detector.detect(stereo_pair.right)
+        self._keypoints_right, train_descriptors = self._desc_extractor.compute(stereo_pair.right, self._keypoints_right)
 
-        # Match features
-        matches = self._matcher.match(query_descriptors, train_descriptors)
-        self._extract_good_matches(matches)
-        self._compute_disparities()
+        if self._keypoints_left and self._keypoints_right:
+            # Match features
+            matches = self._matcher.match(query_descriptors, train_descriptors)
+            self._good_matches = self._extract_good_matches(self._keypoints_left, self._keypoints_right, matches, epipolar_limit=1.0)
+            if len(self._good_matches):
+                self._compute_disparities(self._keypoints_left, self._keypoints_right, self._good_matches)
 
     @property
     def keypoints_left(self):
@@ -80,20 +89,26 @@ class SparseStereoMatcher:
 
         return all_keypoints
 
-    def _extract_good_matches(self, matches):
-        self._good_matches = []
-        for match in matches:  # fixme enklere måte?
-            epipolar_is_ok = np.abs(
-                self._keypoints_left[match.queryIdx].pt[0] - self._keypoints_right[match.trainIdx].pt[0]) < 1.0
-            disparity_is_positive = self._keypoints_left[match.queryIdx].pt[1] > \
-                                    self._keypoints_right[match.trainIdx].pt[1]
-            if epipolar_is_ok and disparity_is_positive:
-                self._good_matches.append(match)
+    def _extract_good_matches(self, keypoints_l, keypoints_r, matches, epipolar_limit=1.0):
+        query_idx = [m.queryIdx for m in matches]
+        train_idx = [m.trainIdx for m in matches]
+        
+        pts_l = np.array([k.pt for k in np.asarray(keypoints_l)[query_idx]])
+        pts_r = np.array([k.pt for k in np.asarray(keypoints_r)[train_idx]])
+        
+        epipolar_is_ok = abs(pts_l[:,1] - pts_r[:,1]) < epipolar_limit
+        disparity_is_positive = pts_l[:,0] > pts_r[:,0]
+        good_matches = epipolar_is_ok & disparity_is_positive
 
-    def _compute_disparities(self):
-        self._point_disparities = []
-        for match in self._good_matches:  # fixme enklere måte?
-            left_point = self._keypoints_left[match.queryIdx].pt
-            right_point = self._keypoints_right[match.trainIdx].pt
-            disparity = left_point[1] - right_point[1]
-            self._point_disparities.append((left_point, disparity))
+        return np.asarray(matches)[good_matches]
+
+
+    def _compute_disparities(self, keypoints_l, keypoints_r, matches):
+        query_idx = [m.queryIdx for m in matches]
+        train_idx = [m.trainIdx for m in matches]
+        
+        pts_l = np.array([k.pt for k in np.asarray(keypoints_l)[query_idx]])
+        pts_r = np.array([k.pt for k in np.asarray(keypoints_r)[train_idx]])
+
+        disparity = pts_l[:,0] - pts_r[:,0]
+        self._point_disparities = list(zip(pts_l.astype(int), disparity))

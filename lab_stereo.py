@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 
-from common_lab_utils import (Size, visualize_matches)
+from common_lab_utils import (Size, add_depth_point, visualize_matches, colours)
 from sparse_stereo_matcher import (SparseStereoMatcher)
 from stereo_calibration import StereoCalibration
 from stereo_camera import (StereoCamera, CameraIndex, CaptureMode, LaserMode)
@@ -9,7 +9,7 @@ from stereo_camera import (StereoCamera, CameraIndex, CaptureMode, LaserMode)
 
 def run_stereo_lab():
     laser_on = False
-    rectified = False
+    rectified = True
     lines = True
 
     cam = StereoCamera(CaptureMode.RECTIFIED)
@@ -53,23 +53,22 @@ def run_stereo_lab():
         stereo_matcher.match(stereo_rectified)
 
         # Visualize matched point correspondences
-        match_image = visualize_matches(stereo_rectified, stereo_matcher);
+        match_image = visualize_matches(stereo_rectified, stereo_matcher)
         cv2.imshow(matching_win, match_image)
 
-        # Visualise
-        pair_raw = np.hstack((stereo_raw.left, stereo_raw.right))
-        pair_rectified = np.hstack((stereo_rectified.left, stereo_rectified.right))
+        # Visualize depth in meters for each point.
+        fu = calibration.f
+        bx = calibration.baseline
+        vis_depth = cv2.cvtColor(stereo_rectified.left, cv2.COLOR_GRAY2BGR)
+        
+        if stereo_matcher.point_disparities is not None:
+            for pt, d in stereo_matcher.point_disparities:
+                depth = fu * bx / d
+                add_depth_point(vis_depth, pt, depth)
 
-        zeros = np.zeros(pair_raw.shape[:2], dtype=pair_raw.dtype)
-        viz = cv2.merge([pair_raw, pair_rectified, zeros])
+        cv2.imshow(depth_win, vis_depth)
+        
 
-        # Draw lines along the image rows.
-        # For rectified pair, these should coincide with the epipolar lines.
-        if lines:
-            for i in np.arange(50, viz.shape[0], 50):
-                cv2.line(viz, (0, i), (viz.shape[1], i), (0, 0, 65535))
-
-        cv2.imshow('RealSense', viz)
         key = cv2.waitKey(1)
         if key == ord('q'):
             print("Bye")

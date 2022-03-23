@@ -53,12 +53,12 @@ class StereoCalibration:
     @property
     def baseline(self):
         """The distance between the origins of the cameras"""
-        return 1.0 / self._q(3, 2)
+        return 1.0 / self._q[3, 2]
 
     @property
     def f(self):
         """The f-coefficient of the Q-matrix"""
-        return self._q(2, 3)
+        return self._q[2, 3]
 
     @property
     def img_size(self):
