@@ -33,13 +33,17 @@ class StereoCamera:
     def __del__(self):
         self._pipe.stop()
 
-    def get_info(self):
+    def __str__(self):
         device = self._pipe.get_active_profile().get_device()
         serial_number = device.get_info(rs2.camera_info.serial_number)
         device_product_line = str(device.get_info(rs2.camera_info.product_line))
-
-        print(f" product line: {device_product_line}")
-        print(f" serial: {serial_number}")
+        
+        return ("RealSense:\n"
+            f"  product line: {device_product_line}\n"
+            f"  serial: {serial_number}\n"
+            f"  resolution: {self.get_resolution(CameraIndex.LEFT)}\n"
+            f"  framerate: {self.get_framerate(CameraIndex.LEFT)}"
+        )
 
     def get_stereo_pair(self) -> StereoPair:
         data = self._pipe.wait_for_frames()

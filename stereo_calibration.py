@@ -21,10 +21,14 @@ class StereoCalibration:
         self._compute_rectification_mapping()
 
     def __str__(self):
-        result = f"K.left\n{self._k_left}\n\nd.left: {self._d_left}\n"
-        result += f"\nK.right\n{self._k_right}\n\nd.right: {self._d_right}\n"
-        result += f"\nR\n{self._R}\nt: {self._t}\n"
-        return result
+        return (
+            f"\nK.left:\n{self._k_left}\n"
+            f"\nd.left:\n{self._d_left}\n"
+            f"\nK.right:\n{self._k_right}\n"
+            f"\nd.right:\n{self._d_right}\n"
+            f"\nR:\n{self._R}\n"
+            f"\nt:\n{self._t}\n"
+        )
 
     @classmethod
     def from_file(cls, intrinsic_filename, extrinsic_filename, img_size: Size):

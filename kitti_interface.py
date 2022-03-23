@@ -34,6 +34,10 @@ class KittiCamera:
         # Initialise frame count.
         self._frame_count = 0
 
+    def __str__(self):
+        return "KittiCamera"
+
+
     def get_stereo_pair(self) -> StereoPair:
         success_left, left_frame = self._left_cap.read()
         success_right, right_frame = self._right_cap.read()

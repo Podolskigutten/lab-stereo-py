@@ -8,25 +8,13 @@ from stereo_calibration import StereoCalibration
 from stereo_camera import (StereoCamera, CameraIndex, CaptureMode, LaserMode)
 
 
-def run_stereo_lab():
-    laser_on = False
-    lines = True
-
-    cam = StereoCamera(CaptureMode.RECTIFIED)
-    # cam.set_laser_mode(LaserMode.ON if laser_on else LaserMode.OFF)
-
-    import sys
-    cam = KittiCamera(*sys.argv[1:3])
-    calibration = StereoCalibration.from_kitti(cam)
-    print(f"calibration:\n{calibration}")
+def run_stereo_lab(cam, calibration):
+    print(f"camera:\n{cam}\ncalibration:\n{calibration}")
 
     detector = cv2.FastFeatureDetector_create()
     desc_extractor = cv2.BRISK_create(30, 0)
     stereo_matcher = SparseStereoMatcher(detector, desc_extractor)
 
-    print("Press 'l' to toggle laser.")
-    print("Press 'g' to toggle lines.")
-    print("Press 'u' to toggle rectified/unrectified.")
     print("Press 'q' to quit.")
 
     matching_win = "Stereo matching"
@@ -63,24 +51,24 @@ def run_stereo_lab():
                 add_depth_point(vis_depth, pt, depth)
 
         cv2.imshow(depth_win, vis_depth)
-        
 
         key = cv2.waitKey(1)
         if key == ord('q'):
             print("Bye")
             break
-        elif key == ord('l'):
-            laser_on = not laser_on
-            cam.set_laser_mode(LaserMode.ON if laser_on else LaserMode.OFF)
-            print(f"Laser: {laser_on}")
-        elif key == ord('g'):
-            lines = not lines
-            print(f"Lines: {lines}")
-        elif key == ord('u'):
-            rectified = not rectified
-            cam.set_capture_mode(CaptureMode.RECTIFIED if rectified else CaptureMode.UNRECTIFIED)
-            print(f"Rectified: {rectified}")
 
+
+def kitti():
+    import sys
+    cam = KittiCamera(*sys.argv[1:3])
+    calibration = StereoCalibration.from_kitti(cam)
+    return cam, calibration
+
+def realsense():
+    cam = StereoCamera(CaptureMode.RECTIFIED)
+    calibration = StereoCalibration.from_realsense(cam)
+    return cam, calibration
 
 if __name__ == "__main__":
-    run_stereo_lab()
+    #run_stereo_lab(*kitti())
+    run_stereo_lab(*realsense())

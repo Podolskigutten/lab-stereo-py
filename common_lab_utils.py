@@ -9,6 +9,9 @@ class Size:
     def __init__(self, width: float, height: float):
         self._width = width
         self._height = height
+    
+    def __str__(self):
+        return f"w: {self._width}, h: {self._height}"
 
     @classmethod
     def from_numpy_shape(cls, shape):
