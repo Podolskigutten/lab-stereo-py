@@ -83,7 +83,9 @@ class KittiCamera:
 
 
 if __name__ == "__main__":
-    kitti_cam = KittiCamera('/home/thm/tek5030/kitti-data/2011_09_30_drive_0020_extract/2011_09_30/2011_09_30_drive_0020_extract', '/home/thm/tek5030/kitti-data/2011_09_30_calib/2011_09_30')
+    dataset_path = ''
+    calibration_path = ''
+    kitti_cam = KittiCamera(dataset_path, calibration_path)
 
     print("Calibration matrix for left camera:")
     print(kitti_cam.calibration['GrayLeft']['calibration'])
@@ -93,8 +95,10 @@ if __name__ == "__main__":
         if left_frame is None or right_frame is None:
             break
 
-        img = np.c_[left_frame, right_frame]
+        img = np.concatenate([left_frame, right_frame], axis=1)
         cv2.imshow('Test', img)
 
-        if cv2.waitKey(100) == 'q':
+        key = cv2.waitKey(100)
+        if key == ord('q'):
+            print("Quit")
             break
