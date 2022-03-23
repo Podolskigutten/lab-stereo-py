@@ -31,6 +31,10 @@ class Size:
 class StereoPair:
     left: np.ndarray
     right: np.ndarray
+    
+    def __iter__(self):
+        print("iter")
+        return iter((self.left, self.right))
 
 
 class DotDict(dict):

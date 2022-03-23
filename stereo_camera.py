@@ -43,16 +43,16 @@ class StereoCamera:
 
     def get_stereo_pair(self) -> StereoPair:
         data = self._pipe.wait_for_frames()
-        frame_1 = np.asanyarray(data.get_infrared_frame(int(CameraIndex.LEFT)).get_data())
-        frame_2 = np.asanyarray(data.get_infrared_frame(int(CameraIndex.RIGHT)).get_data())
-        return StereoPair(frame_1, frame_2)
+        frame_l = np.asanyarray(data.get_infrared_frame(int(CameraIndex.LEFT)).get_data())
+        frame_r = np.asanyarray(data.get_infrared_frame(int(CameraIndex.RIGHT)).get_data())
+        return StereoPair(frame_l, frame_r)
 
     def get_stamped_stereo_pair(self):
         data = self._pipe.wait_for_frames()
-        frame_1 = np.asanyarray(data.get_infrared_frame(int(CameraIndex.LEFT)).get_data())
-        frame_2 = np.asanyarray(data.get_infrared_frame(int(CameraIndex.RIGHT)).get_data())
+        frame_l = np.asanyarray(data.get_infrared_frame(int(CameraIndex.LEFT)).get_data())
+        frame_r = np.asanyarray(data.get_infrared_frame(int(CameraIndex.RIGHT)).get_data())
         usec_timestamp = data.get_frame_metadata(rs2.frame_metadata_value.frame_timestamp)
-        return StereoPair(frame_1, frame_2), usec_timestamp
+        return StereoPair(frame_l, frame_r), usec_timestamp
 
     def get_framerate(self, camera: CameraIndex):
         profile = self.get_video_stream_profile(camera)

@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 
 from common_lab_utils import (Size, add_depth_point, visualize_matches, colours)
+from kitti_interface import KittiCamera
 from sparse_stereo_matcher import (SparseStereoMatcher)
 from stereo_calibration import StereoCalibration
 from stereo_camera import (StereoCamera, CameraIndex, CaptureMode, LaserMode)
@@ -9,19 +10,14 @@ from stereo_camera import (StereoCamera, CameraIndex, CaptureMode, LaserMode)
 
 def run_stereo_lab():
     laser_on = False
-    rectified = True
     lines = True
 
     cam = StereoCamera(CaptureMode.RECTIFIED)
-    calibration = StereoCalibration.from_camera(cam)
+    # cam.set_laser_mode(LaserMode.ON if laser_on else LaserMode.OFF)
 
-    cam.set_capture_mode(CaptureMode.RECTIFIED if rectified else CaptureMode.UNRECTIFIED)
-    cam.set_laser_mode(LaserMode.ON if laser_on else LaserMode.OFF)
-
-    print("Connected to RealSense camera:")
-    cam.get_info()
-    print(f" resolution: {cam.get_resolution(CameraIndex.LEFT)}")
-    print(f" framerate: {cam.get_framerate(CameraIndex.LEFT)}")
+    import sys
+    cam = KittiCamera(*sys.argv[1:3])
+    calibration = StereoCalibration.from_kitti(cam)
     print(f"calibration:\n{calibration}")
 
     detector = cv2.FastFeatureDetector_create()

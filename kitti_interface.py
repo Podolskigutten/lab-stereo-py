@@ -1,6 +1,7 @@
 import numpy as np
 import cv2
 import os
+from common_lab_utils import (StereoPair)
 
 
 class KittiCamera:
@@ -33,7 +34,7 @@ class KittiCamera:
         # Initialise frame count.
         self._frame_count = 0
 
-    def get_stereo_pair(self):
+    def get_stereo_pair(self) -> StereoPair:
         success_left, left_frame = self._left_cap.read()
         success_right, right_frame = self._right_cap.read()
 
@@ -44,7 +45,7 @@ class KittiCamera:
 
         self._frame_count += 1
 
-        return left_frame, right_frame
+        return StereoPair(left_frame, right_frame)
 
     @property
     def frame_count(self):
@@ -83,12 +84,18 @@ class KittiCamera:
 
 
 if __name__ == "__main__":
-    dataset_path = ''
-    calibration_path = ''
+    import sys
+    if len(sys.argv) >= 3:
+        dataset_path, calibration_path = sys.argv[1:3]
+    else:
+        dataset_path = ''
+        calibration_path = ''
+
     kitti_cam = KittiCamera(dataset_path, calibration_path)
 
     print("Calibration matrix for left camera:")
     print(kitti_cam.calibration['GrayLeft']['calibration'])
+    print(kitti_cam.calibration['GrayLeft']['size'])
 
     while True:
         left_frame, right_frame = kitti_cam.get_stereo_pair()
