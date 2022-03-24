@@ -88,6 +88,8 @@ class KittiCamera:
 
 
 if __name__ == "__main__":
+    """Test the interface"""
+
     import sys
     if len(sys.argv) >= 3:
         dataset_path, calibration_path = sys.argv[1:3]

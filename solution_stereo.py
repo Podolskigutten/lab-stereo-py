@@ -10,7 +10,7 @@ from real_sense_stereo_camera import (RealSenseStereoCamera, LaserMode)
 from anms import anms
 
 
-def run_stereo_lab(cam, calibration):
+def run_stereo_solution(cam, calibration):
     # TODO 1: If you want to use Kitti, choose this stereo source below.
     # Print camera info.
     print(f"camera:\n{cam}\ncalibration:\n{calibration}")
@@ -31,7 +31,7 @@ def run_stereo_lab(cam, calibration):
     print("Press 'd' to toggle dense processing.")
     if isinstance(cam, RealSenseStereoCamera):
         print("Press 'l' to toggle laser.")
-    
+
     matching_win = "Stereo matching"
     depth_win = "Stereo depth"
     dense_win = "Dense disparity"
@@ -161,9 +161,8 @@ class SparseStereoMatcher:
         pts_r = np.array([k.pt for k in np.asarray(keypoints_r)[train_idx]])
 
         # TODO 2: Extract good matches by exploiting the stereo geometry.
-        epipolar_is_ok = np.ones(len(matches)) > 0          # Dummy, do something more useful!
-        disparity_is_positive = np.ones(len(matches)) > 0   # Dummy, do something more useful!
-
+        epipolar_is_ok = abs(pts_l[:, 1] - pts_r[:, 1]) < epipolar_limit
+        disparity_is_positive = pts_l[:, 0] > pts_r[:, 0]
         good_matches = epipolar_is_ok & disparity_is_positive
 
         return np.asarray(matches)[good_matches]
@@ -180,7 +179,7 @@ def compute_disparities(match_result: StereoMatchingResult):
     pts_r = np.array([k.pt for k in np.asarray(match_result.keypoints_right)[train_idx]])
 
     # TODO 3: Compute disparity.
-    disparity = np.zeros(pts_l.shape[0])    # Dummy, compute disparity!
+    disparity = pts_l[:, 0] - pts_r[:, 0]
 
     return pts_l, disparity
 
@@ -193,7 +192,7 @@ def compute_depths(disparities: np.ndarray, calibration: StereoCalibration):
     bx = calibration.baseline
 
     # TODO 4: Compute depths.
-    depths = np.zeros(disparities.shape)    # Dummy, compute depths!
+    depths = (fu * bx) / disparities
 
     return depths
 
@@ -204,13 +203,13 @@ def compute_3d_points(pts_left: np.ndarray, disparities: np.ndarray, Q: np.ndarr
 
     # TODO 5: Compute 3D points.
     pts_with_disparity = np.concatenate([pts_left.T, disparities[np.newaxis, :]], axis=0)
-    pts_3d = np.array([])       # Dummy, compute 3D points!
+    pts_3d = hnormalized(Q @ homogeneous(pts_with_disparity))
 
     return pts_3d
 
 
 class DenseStereoMatcher:
-    def __init__(self, calibration: StereoCalibration, min_disparity=5, num_disparities=16*8, block_size=11):
+    def __init__(self, calibration: StereoCalibration, min_disparity=5, num_disparities=16 * 8, block_size=11):
         self._fu_bx = calibration.f * calibration.baseline
 
         self.min_disparity = min_disparity
@@ -231,15 +230,15 @@ class DenseStereoMatcher:
         ))
 
         # TODO 6.1: Compute min and max depths.
-        self._min_depth = self.max_disparity    # Dummy, compute depth!
-        self._max_depth = self.min_disparity    # Dummy, compute depth!
+        self._min_depth = self._fu_bx / self.max_disparity
+        self._max_depth = self._fu_bx / self.min_disparity
 
     def match(self, stereo_pair: StereoPair):
         dense_disparity = self._dense_matcher.compute(stereo_pair)
         dense_disparity[(dense_disparity < 0) | (dense_disparity > self.max_disparity)] = 0.
 
         # TODO 6.2: Compute depths.
-        dense_depth = dense_disparity           # Dummy, compute depth!
+        dense_depth = self._fu_bx / dense_disparity
 
         return dense_disparity, dense_depth
 
@@ -270,4 +269,4 @@ def realsense():
 
 if __name__ == "__main__":
     # TODO 1: Choose stereo source
-    run_stereo_lab(*realsense())
+    run_stereo_solution(*realsense())
