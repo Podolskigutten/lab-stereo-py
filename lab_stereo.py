@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 import timeit
 
-from common_lab_utils import (CvStereoMatcherWrap, Size, StereoPair, StereoMatchingResult)
+from common_lab_utils import (CvStereoMatcherWrap, Size, StereoPair, StereoMatchingResult, hnormalized, homogeneous)
 from visualisation import (visualise_dense, visualize_depths, visualize_matches)
 from kitti_interface import KittiCamera
 from stereo_calibration import StereoCalibration
@@ -59,19 +59,15 @@ def run_stereo_lab(cam, calibration):
 
         # Compute disparity for each match.
         # TODO 3: Compute the disparity for each match in compute_disparites() below.
-        pts_left, disparities = compute_disparities(match_result)
+        sparse_pts_left, sparse_disparities = compute_disparities(match_result)
 
         # Compute the corresponding depth for each disparity.
         # TODO 4: Compute the corresponding depth for each disparity in compute_depths() below.
-        depths = compute_depths(disparities, calibration)
+        sparse_depths = compute_depths(sparse_disparities, calibration)
 
-        # Visualize matched point correspondences
-        match_image = visualize_matches(stereo_rectified, match_result, duration_rectification, duration_matching)
-        cv2.imshow(matching_win, match_image)
-
-        # Visualize depth in meters for each point.
-        vis_depth = visualize_depths(stereo_rectified, pts_left, depths)
-        cv2.imshow(depth_win, vis_depth)
+        # Compute 3D points for each disparity.
+        # TODO 5: Compute 3D points in compute_3d_points() below.
+        pts_3d = compute_3d_points(sparse_pts_left, sparse_disparities, calibration.q)
 
         # Dense stereo matching using OpenCV
         if dense:
@@ -83,6 +79,14 @@ def run_stereo_lab(cam, calibration):
             # Visualise dense depth.
             vis_dense = visualise_dense(dense_depth, dense_matcher.min_depth, dense_matcher.max_depth, duration_dense)
             cv2.imshow(dense_win, vis_dense)
+
+        # Visualize matched point correspondences
+        match_image = visualize_matches(stereo_rectified, match_result, duration_rectification, duration_matching)
+        cv2.imshow(matching_win, match_image)
+
+        # Visualize sparse depth in meters for each point.
+        vis_depth = visualize_depths(stereo_rectified, sparse_pts_left, sparse_depths)
+        cv2.imshow(depth_win, vis_depth)
 
         key = cv2.waitKey(1)
         if key == ord('q'):
@@ -188,6 +192,17 @@ def compute_depths(disparities: np.ndarray, calibration: StereoCalibration):
     return depths
 
 
+def compute_3d_points(pts_left: np.ndarray, disparities: np.ndarray, Q: np.ndarray):
+    if len(disparities) <= 0:
+        return np.array([])
+
+    # TODO 5: Compute 3D points.
+    pts_with_disparity = np.concatenate([pts_left.T, disparities[np.newaxis, :]], axis=0)
+    pts_3d = hnormalized(Q @ homogeneous(pts_with_disparity))
+
+    return pts_3d
+
+
 class DenseStereoMatcher:
     def __init__(self, calibration: StereoCalibration, min_disparity=5, num_disparities=16*8, block_size=11):
         self._fu_bx = calibration.f * calibration.baseline
@@ -209,7 +224,7 @@ class DenseStereoMatcher:
             mode=cv2.StereoSGBM_MODE_HH
         ))
 
-        # TODO 5.1: Compute min and max depths.
+        # TODO 6.1: Compute min and max depths.
         self._min_depth = self._fu_bx / self.max_disparity
         self._max_depth = self._fu_bx / self.min_disparity
 
@@ -217,7 +232,7 @@ class DenseStereoMatcher:
         dense_disparity = self._dense_matcher.compute(stereo_pair)
         dense_disparity[(dense_disparity < 0) | (dense_disparity > self.max_disparity)] = 0.
 
-        # TODO 5.2: Compute depths.
+        # TODO 6.2: Compute depths.
         dense_depth = self._fu_bx / dense_disparity
 
         return dense_disparity, dense_depth

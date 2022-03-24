@@ -81,3 +81,13 @@ class CvStereoMatcherWrap:
         disparity = (disparity_16bit_fixed * ratio_1_over_16).astype(np.float32)
 
         return disparity
+
+
+def homogeneous(x):
+    """Transforms Cartesian column vectors to homogeneous column vectors"""
+    return np.r_[x, [np.ones(x.shape[1])]]
+
+
+def hnormalized(x):
+    """Transforms homogeneous column vector to Cartesian column vectors"""
+    return x[:-1] / x[-1]
