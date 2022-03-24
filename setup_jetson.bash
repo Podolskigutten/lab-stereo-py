@@ -14,6 +14,15 @@ setup_jetson() (
 
   set -eu
   printf "${green}running setup for jetson.${normal}\n"
+
+
+  printf "${dim}installing librealsense2 ...${normal}\n"
+  sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-key F6E65AC044F831AC80A06380C8B3A55A6F3EFCDE || sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-key F6E65AC044F831AC80A06380C8B3A55A6F3EFCDE
+
+  sudo add-apt-repository "deb https://librealsense.intel.com/Debian/apt-repo $(lsb_release -cs) main" -u
+
+  sudo apt-get install -y librealsense2-utils librealsense2-dev
+
   printf "${dim}[ ] create virtual environment ...${normal}\n"
   python3.8 -m venv venv
   check
