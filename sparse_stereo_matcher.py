@@ -12,24 +12,24 @@ class SparseStereoMatcher:
     def match(self, stereo_pair: StereoPair):
         """Detect and match keypoints in both images."""
         
-        # n_grid_cols = stereo_pair.left.shape[1] // 16
-        # n_grid_rows = stereo_pair.left.shape[0] // 16
-        # grid_size = Size(n_grid_cols, n_grid_rows)
-        # patch_width = 32
+        n_grid_cols = stereo_pair.left.shape[1] // 16
+        n_grid_rows = stereo_pair.left.shape[0] // 16
+        grid_size = Size(n_grid_cols, n_grid_rows)
+        patch_width = 32
 
         self._keypoints_left = None
         self._keypoints_right = None
         self._matches = None
         self._point_disparities = None
+
+        use_grid = True
+
         # Detect and describe features in the left image.
-        #self._keypoints_left = self._detect_in_grid(stereo_pair.left, grid_size, 1, patch_width)
-        self._keypoints_left = self._detector.detect(stereo_pair.left)
-        #self._keypoints_left = retain_best(self._keypoints_left, 25)
+        self._keypoints_left = self._detect_in_grid(stereo_pair.left, grid_size, 1, patch_width) if use_grid else self._detector.detect(stereo_pair.left)
         self._keypoints_left, query_descriptors = self._desc_extractor.compute(stereo_pair.left, self._keypoints_left)
 
         # Detect and describe features in the right image.
-        # self._keypoints_right = self._detect_in_grid(stereo_pair.right, grid_size, 1, patch_width)
-        self._keypoints_right = self._detector.detect(stereo_pair.right)
+        self._keypoints_right = self._detect_in_grid(stereo_pair.right, grid_size, 1, patch_width) if use_grid else self._detector.detect(stereo_pair.right)
         self._keypoints_right, train_descriptors = self._desc_extractor.compute(stereo_pair.right, self._keypoints_right)
 
         if self._keypoints_left and self._keypoints_right:
@@ -71,21 +71,17 @@ class SparseStereoMatcher:
             for y in range(grid_size.height):
                 row_range = slice(max(y * height - patch_rad, 0), min((y + 1) * height + patch_rad, image_size.height))
                 col_range = slice(max(x * width - patch_rad, 0), min((x + 1) * width + patch_rad, image_size.width))
-                sub_img = image[row_range, col_range]
 
-                grid_keypoints = self._detector.detect(sub_img)
+                grid_keypoints = self._detector.detect(image[row_range, col_range])
                 if not grid_keypoints:
                     continue
-                best = retain_best(grid_keypoints, max_in_cell)
-                grid_keypoints = np.asarray(grid_keypoints)[best]
 
-                for keypoint in grid_keypoints:
-                    pt = list(keypoint.pt)
-                    pt[0] += col_range.start
-                    pt[1] += row_range.start
-                    keypoint.pt = tuple(pt)
+                grid_keypoints = retain_best(grid_keypoints, max_in_cell)
 
-                all_keypoints = all_keypoints + grid_keypoints
+                for i in range(len(grid_keypoints)):
+                    grid_keypoints[i].pt = (grid_keypoints[i].pt[0] + col_range.start, grid_keypoints[i].pt[1] + row_range.start)
+
+                all_keypoints = all_keypoints + tuple(grid_keypoints)
 
         return all_keypoints
 

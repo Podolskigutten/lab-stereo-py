@@ -67,7 +67,7 @@ def visualize_matches(stereo_pair, stereo_matcher):
     :param stereo_matcher: The matcher that has extracted the keypoints
     :return: an image with visualization of keypoint matches
     """
-    if stereo_matcher.matches is None:
+    if stereo_matcher.matches is None or not stereo_matcher.keypoints_left or not stereo_matcher.keypoints_right:
         return np.hstack((stereo_pair.left, stereo_pair.right))
 
     cv2.putText(stereo_pair.left, f"LEFT", (10, 20), font.face, font.scale, colours.green)
