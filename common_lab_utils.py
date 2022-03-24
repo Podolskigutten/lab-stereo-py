@@ -1,6 +1,6 @@
-import cv2.cv2
 import numpy as np
 from dataclasses import dataclass
+import cv2
 
 
 class Size:
@@ -40,50 +40,44 @@ class StereoPair:
         return iter((self.left, self.right))
 
 
-@dataclass
-class colours:
-    green = (0, 255, 0)
-    red = (0, 0, 255)
-    white = (255, 255, 255)
+class StereoMatchingResult:
+    def __init__(self, keypoints_left=(), keypoints_right=(), matches=()):
+        self._keypoints_left = keypoints_left
+        self._keypoints_right = keypoints_right
+        self._matches = matches
+
+    @property
+    def keypoints_left(self):
+        return self._keypoints_left
+
+    @property
+    def keypoints_right(self):
+        return self._keypoints_right
+
+    @property
+    def matches(self):
+        return self._matches
 
 
-@dataclass
-class font:
-    face = cv2.FONT_HERSHEY_PLAIN
-    scale = 1.0
+class CvStereoMatcherWrap:
+    def __init__(self, matcher):
+        self._matcher = matcher
 
+    def compute(self, stereo_rectified: StereoPair):
+        num_disparities = self._matcher.getNumDisparities()
+        padded_l = cv2.copyMakeBorder(stereo_rectified.left, 0, 0, num_disparities, 0, cv2.BORDER_CONSTANT,
+                                      value=(0, 0, 0))
+        padded_r = cv2.copyMakeBorder(stereo_rectified.right, 0, 0, num_disparities, 0, cv2.BORDER_CONSTANT,
+                                      value=(0, 0, 0))
+        disparity_padded = self._matcher.compute(padded_l, padded_r)
 
-def visualize_matches(stereo_pair, stereo_matcher, duration_grabbing, duration_matching):
-    """
-    This function will create an image that shows corresponding keypoints in two images.
+        # Unpad.
+        pixels_to_unpad_left = num_disparities
+        pixels_to_unpad_right = padded_l.shape[1]
+        disparity_16bit_fixed = disparity_padded[:, pixels_to_unpad_left:pixels_to_unpad_right]
 
-    :param stereo_pair: The two images
-    :param stereo_matcher: The matcher that has extracted the keypoints
-    :param duration How long it took to perform the keypoint matching
-    :return: an image with visualization of keypoint matches
-    """
-    if stereo_matcher.matches is None or not stereo_matcher.keypoints_left or not stereo_matcher.keypoints_right:
-        return np.hstack((stereo_pair.left, stereo_pair.right))
+        # Convert from 16 bit fixed point.
+        ratio_1_over_16 = 1.0 / 16.0
+        disparity = (disparity_16bit_fixed * ratio_1_over_16).astype(np.float32)
 
-    cv2.putText(stereo_pair.left, f"LEFT", (10, 20), font.face, font.scale, colours.green)
-    cv2.putText(stereo_pair.right, f"RIGHT", (10, 20), font.face, font.scale, colours.green)
-    vis_img = cv2.drawMatches(
-        stereo_pair.left, stereo_matcher.keypoints_left,
-        stereo_pair.right, stereo_matcher.keypoints_right,
-        stereo_matcher.matches, None, flags=2)
-    cv2.putText(vis_img, f"capture/rect:  {round(duration_grabbing)} ms", (10, 40), font.face, font.scale, colours.red)
-    cv2.putText(vis_img, f"matching:  {round(duration_matching)} ms", (10, 60), font.face, font.scale, colours.red)
-    cv2.putText(vis_img, f"matches:  {len(stereo_matcher.matches)}", (10, 80), font.face, font.scale, colours.red)
-    return vis_img
-
-def add_depth_point(img, px, depth):
-    """
-    In an image, draw a cross at a pixel coordinate with a depth value printed next to it.
-
-    :param img: The image to draw on.
-    :param px:  The pixel position of the depth measurement.
-    :param depth: The depth value
-    """
-    marker_size = 5
-    cv2.drawMarker(img, px, colours.green, cv2.MARKER_CROSS, marker_size)
-    cv2.putText(img, f"{depth:.2f}", px, font.face, font.scale, colours.green)
+        return disparity
