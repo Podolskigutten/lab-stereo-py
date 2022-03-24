@@ -14,6 +14,10 @@ setup_jetson() (
 
   set -eu
   printf "${green}running setup for jetson.${normal}\n"
+
+  # install librealsense requirements
+  ./libuvc_installation.sh
+
   printf "${dim}[ ] create virtual environment ...${normal}\n"
   python3.8 -m venv venv
   check
@@ -28,7 +32,7 @@ setup_jetson() (
   check
 
   printf "${dim}[ ] download and install pyrealsense2 ...${normal}\n"
-  wget -qi url-pyrealsense2.txt -qO- | tar xzf - -C venv/lib/python3.8/site-packages/
+  wget -qi url-pyrealsense2.txt -O- | tar xzf - -C venv/lib/python3.8/site-packages/
   check
 
   printf "${dim}[ ] install requirements ...${normal}\n"
