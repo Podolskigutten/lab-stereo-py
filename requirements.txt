@@ -1,4 +1,5 @@
+https://github.com/tussedrotten/pylie/archive/v0.4.1.zip
 numpy
 opencv_python
-opencv_contrib_python
 pyrealsense2
+pyvista
