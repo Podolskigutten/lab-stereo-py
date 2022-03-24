@@ -59,12 +59,13 @@ def retain_best(keypoints, num_to_keep):
     return np.asanyarray(keypoints)[best]
 
 
-def visualize_matches(stereo_pair, stereo_matcher):
+def visualize_matches(stereo_pair, stereo_matcher, duration_grabbing, duration_matching):
     """
     This function will create an image that shows corresponding keypoints in two images.
 
     :param stereo_pair: The two images
     :param stereo_matcher: The matcher that has extracted the keypoints
+    :param duration How long it took to perform the keypoint matching
     :return: an image with visualization of keypoint matches
     """
     if stereo_matcher.matches is None or not stereo_matcher.keypoints_left or not stereo_matcher.keypoints_right:
@@ -76,6 +77,9 @@ def visualize_matches(stereo_pair, stereo_matcher):
         stereo_pair.left, stereo_matcher.keypoints_left,
         stereo_pair.right, stereo_matcher.keypoints_right,
         stereo_matcher.matches, None, flags=2)
+    cv2.putText(vis_img, f"capture/rect:  {duration_grabbing:.2f} s", (10, 40), font.face, font.scale, colours.red)
+    cv2.putText(vis_img, f"matching:  {duration_matching:.2f} s", (10, 60), font.face, font.scale, colours.red)
+    cv2.putText(vis_img, f"matches:  {len(stereo_matcher.matches)}", (10, 80), font.face, font.scale, colours.red)
     return vis_img
 
 def add_depth_point(img, px, depth):

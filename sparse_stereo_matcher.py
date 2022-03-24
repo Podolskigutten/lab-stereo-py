@@ -9,7 +9,7 @@ class SparseStereoMatcher:
         self._desc_extractor = desc_extractor
         self._matcher = cv2.BFMatcher_create(self._desc_extractor.defaultNorm())
 
-    def match(self, stereo_pair: StereoPair):
+    def match(self, stereo_pair: StereoPair, use_grid:bool=True):
         """Detect and match keypoints in both images."""
         
         n_grid_cols = stereo_pair.left.shape[1] // 16
@@ -21,8 +21,6 @@ class SparseStereoMatcher:
         self._keypoints_right = None
         self._matches = None
         self._point_disparities = None
-
-        use_grid = True
 
         # Detect and describe features in the left image.
         self._keypoints_left = self._detect_in_grid(stereo_pair.left, grid_size, 1, patch_width) if use_grid else self._detector.detect(stereo_pair.left)
@@ -85,7 +83,7 @@ class SparseStereoMatcher:
 
         return all_keypoints
 
-    def _extract_good_matches(self, keypoints_l, keypoints_r, matches, epipolar_limit=1.0):
+    def _extract_good_matches(self, keypoints_l, keypoints_r, matches, epipolar_limit):
         query_idx = [m.queryIdx for m in matches]
         train_idx = [m.trainIdx for m in matches]
         
