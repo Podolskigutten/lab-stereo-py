@@ -2,4 +2,4 @@ https://github.com/tussedrotten/pylie/archive/v0.4.1.zip
 numpy
 opencv_python
 pyvista
-vtk @ file:///home/nvidia/tek5030/lab-pose-estimation-py/vtk-9.0.1-cp38-cp38-linux_aarch64.whl
+vtk @ file://${PWD}/vtk-9.0.1-cp38-cp38-linux_aarch64.whl
