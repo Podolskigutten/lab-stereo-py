@@ -44,6 +44,7 @@ class StereoPair:
 class colours:
     green = (0, 255, 0)
     red = (0, 0, 255)
+    white = (255, 255, 255)
 
 
 @dataclass

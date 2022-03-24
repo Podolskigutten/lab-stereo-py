@@ -19,9 +19,11 @@ def run_stereo_lab(cam, calibration):
     use_grid = False
     laser_on = False
     rectified = True
+    dense = False
 
     print("Press 'q' to quit.")
     print("Press 'g' to toggle feature detection in grid.")
+    print("Press 'd' to toggle dense processing.")
     if isinstance(cam, StereoCamera):
         print("Press 'l' to toggle laser.")
         print("Press 'u' to toggle rectified/unrectified.")
@@ -33,7 +35,6 @@ def run_stereo_lab(cam, calibration):
     cv2.namedWindow('RealSense', cv2.WINDOW_AUTOSIZE)
     cv2.namedWindow(matching_win, cv2.WINDOW_AUTOSIZE)
     cv2.namedWindow(depth_win, cv2.WINDOW_AUTOSIZE)
-    cv2.namedWindow(dense_win, cv2.WINDOW_AUTOSIZE)
 
     while True:
         # Grab raw images
@@ -73,19 +74,26 @@ def run_stereo_lab(cam, calibration):
         cv2.imshow(depth_win, vis_depth)
 
         # Dense stereo matching using OpenCV
-        dense_matcher = CvStereoMatcherWrap(cv2.StereoSGBM_create(0,192,5))
-        dense_disparity = dense_matcher.compute(stereo_rectified)
+        if dense:
+            start = timeit.default_timer()
+            dense_matcher = CvStereoMatcherWrap(cv2.StereoSGBM_create(0,192,5))
+            cv2.stereo
+            dense_disparity = dense_matcher.compute(stereo_rectified)
 
-        dense_depth = (calibration.f * calibration.baseline) / dense_disparity
-        max_depth = 1.0
-        dense_depth[(dense_disparity < 0) | (dense_depth > max_depth)] = 0
-        dense_depth /= max_depth
+            dense_depth = (calibration.f * calibration.baseline) / dense_disparity
+            max_depth = 1.0
+            dense_depth[(dense_disparity < 0) | (dense_depth > max_depth)] = 0
+            dense_depth /= max_depth
 
-        dense_depth = cv2.cvtColor(dense_depth * 255, cv2.COLOR_GRAY2BGR).astype(np.uint8)
-        dense_depth = cv2.applyColorMap(dense_depth, cv2.COLORMAP_JET)
+            # Colormap
+            dense_depth = cv2.cvtColor(dense_depth * 255, cv2.COLOR_GRAY2BGR).astype(np.uint8)
+            dense_depth = cv2.applyColorMap(dense_depth, cv2.COLORMAP_JET)
+            
+            end = timeit.default_timer()
+            duration_dense = end - start
+            cv2.putText(dense_depth, f"dense:  {duration_dense:.2f} s", (10, 20), font.face, font.scale, colours.white)
 
-
-        cv2.imshow(dense_win, dense_depth)
+            cv2.imshow(dense_win, dense_depth)
 
         key = cv2.waitKey(1)
         if key == ord('q'):
@@ -94,6 +102,11 @@ def run_stereo_lab(cam, calibration):
         elif key == ord('g'):
             use_grid = not use_grid
             print(f"use grid: {use_grid}")
+        elif key == ord('d'):
+            dense = not dense
+            print(f"dense: {dense}")
+            if dense:
+                cv2.namedWindow(dense_win, cv2.WINDOW_AUTOSIZE)
         elif key == ord('u') and isinstance(cam, StereoCamera):
             rectified = not rectified
             cam.set_capture_mode(CaptureMode.RECTIFIED if rectified else CaptureMode.UNRECTIFIED)

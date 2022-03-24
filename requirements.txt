@@ -1,2 +1,3 @@
 numpy
 opencv_python
+opencv_contrib_python
