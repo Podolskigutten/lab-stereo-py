@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 import timeit
 
+from cv_stereo_matcher_wrap import (CvStereoMatcherWrap)
 from common_lab_utils import (Size, add_depth_point, visualize_matches, colours, font)
 from kitti_interface import KittiCamera
 from sparse_stereo_matcher import (SparseStereoMatcher)
@@ -70,6 +71,21 @@ def run_stereo_lab(cam, calibration):
         cv2.putText(vis_depth, f"visualization:  {duration_visualisation:.2f} s", (10, 40), font.face, font.scale, colours.red)
 
         cv2.imshow(depth_win, vis_depth)
+
+        # Dense stereo matching using OpenCV
+        dense_matcher = CvStereoMatcherWrap(cv2.StereoSGBM_create(0,192,5))
+        dense_disparity = dense_matcher.compute(stereo_rectified)
+
+        dense_depth = (calibration.f * calibration.baseline) / dense_disparity
+        max_depth = 1.0
+        dense_depth[(dense_disparity < 0) | (dense_depth > max_depth)] = 0
+        dense_depth /= max_depth
+
+        dense_depth = cv2.cvtColor(dense_depth * 255, cv2.COLOR_GRAY2BGR).astype(np.uint8)
+        dense_depth = cv2.applyColorMap(dense_depth, cv2.COLORMAP_JET)
+
+
+        cv2.imshow(dense_win, dense_depth)
 
         key = cv2.waitKey(1)
         if key == ord('q'):
