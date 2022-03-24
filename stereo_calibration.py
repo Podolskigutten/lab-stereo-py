@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 from common_lab_utils import (Size, StereoPair)
 from kitti_interface import (KittiCamera)
-from stereo_camera import (StereoCamera, CameraIndex)
+from real_sense_stereo_camera import (RealSenseStereoCamera, CameraIndex)
 
 
 class StereoCalibration:
@@ -42,10 +42,10 @@ class StereoCalibration:
         pass
 
     @classmethod
-    def from_realsense(cls, stereo_camera: StereoCamera):
+    def from_realsense(cls, stereo_camera: RealSenseStereoCamera):
         """Load stereo calibration parameters from a RealSense camera."""
-        k_left = stereo_camera.get_k_matrix(CameraIndex.LEFT)
-        k_right = stereo_camera.get_k_matrix(CameraIndex.RIGHT)
+        k_left = stereo_camera.get_calibration_matrix(CameraIndex.LEFT)
+        k_right = stereo_camera.get_calibration_matrix(CameraIndex.RIGHT)
 
         d_left = stereo_camera.get_distortion(CameraIndex.LEFT)
         d_right = stereo_camera.get_distortion(CameraIndex.RIGHT)

@@ -3,30 +3,28 @@ import numpy as np
 import timeit
 
 from cv_stereo_matcher_wrap import (CvStereoMatcherWrap)
-from common_lab_utils import (Size, add_depth_point, visualize_matches, colours, font)
+from common_lab_utils import (add_depth_point, visualize_matches, colours, font)
 from kitti_interface import KittiCamera
 from sparse_stereo_matcher import (SparseStereoMatcher)
 from stereo_calibration import StereoCalibration
-from stereo_camera import (StereoCamera, CameraIndex, CaptureMode, LaserMode)
+from real_sense_stereo_camera import (RealSenseStereoCamera, LaserMode)
 
 
 def run_stereo_lab(cam, calibration):
     print(f"camera:\n{cam}\ncalibration:\n{calibration}")
 
     detector = cv2.FastFeatureDetector_create()
-    desc_extractor = cv2.BRISK_create(30, 0)
+    desc_extractor = cv2.ORB_create(nlevels=1)
     stereo_matcher = SparseStereoMatcher(detector, desc_extractor)
-    use_grid = False
+    use_anms = False
     laser_on = False
-    rectified = True
     dense = False
 
     print("Press 'q' to quit.")
-    print("Press 'g' to toggle feature detection in grid.")
+    print("Press 'g' to toggle adaptive non-maximal suppression.")
     print("Press 'd' to toggle dense processing.")
-    if isinstance(cam, StereoCamera):
+    if isinstance(cam, RealSenseStereoCamera):
         print("Press 'l' to toggle laser.")
-        print("Press 'u' to toggle rectified/unrectified.")
     
     matching_win = "Stereo matching"
     depth_win = "Stereo depth"
@@ -48,13 +46,12 @@ def run_stereo_lab(cam, calibration):
 
         # Perform sparse matching.
         start = timeit.default_timer()
-        stereo_matcher.match(stereo_rectified, use_grid)
+        match_result = stereo_matcher.match(stereo_rectified, use_anms)
         end = timeit.default_timer()
-        duration_matching = end - start
+        duration_matching = (end - start) * 1000
 
         # Visualize matched point correspondences
-        start = timeit.default_timer()
-        match_image = visualize_matches(stereo_rectified, stereo_matcher, duration_grabbing, duration_matching)
+        match_image = visualize_matches(stereo_rectified, match_result, duration_grabbing, duration_matching)
         cv2.imshow(matching_win, match_image)
 
         # Visualize depth in meters for each point.
@@ -62,22 +59,17 @@ def run_stereo_lab(cam, calibration):
         bx = calibration.baseline
         vis_depth = cv2.cvtColor(stereo_rectified.left, cv2.COLOR_GRAY2BGR)
         
-        if stereo_matcher.point_disparities is not None:
-            for pt, d in stereo_matcher.point_disparities:
+        if match_result.point_disparities is not None:
+            for pt, d in match_result.point_disparities:
                 depth = fu * bx / d
                 add_depth_point(vis_depth, pt, depth)
-
-        end = timeit.default_timer()
-        duration_visualisation = end - start
-        cv2.putText(vis_depth, f"visualization:  {duration_visualisation:.2f} s", (10, 40), font.face, font.scale, colours.red)
 
         cv2.imshow(depth_win, vis_depth)
 
         # Dense stereo matching using OpenCV
         if dense:
             start = timeit.default_timer()
-            dense_matcher = CvStereoMatcherWrap(cv2.StereoSGBM_create(0,192,5))
-            cv2.stereo
+            dense_matcher = CvStereoMatcherWrap(cv2.StereoSGBM_create(0, 192, 5))
             dense_disparity = dense_matcher.compute(stereo_rectified)
 
             dense_depth = (calibration.f * calibration.baseline) / dense_disparity
@@ -100,18 +92,14 @@ def run_stereo_lab(cam, calibration):
             print("Bye")
             break
         elif key == ord('g'):
-            use_grid = not use_grid
-            print(f"use grid: {use_grid}")
+            use_anms = not use_anms
+            print(f"Anms: {use_anms}")
         elif key == ord('d'):
             dense = not dense
-            print(f"dense: {dense}")
+            print(f"Dense: {dense}")
             if dense:
                 cv2.namedWindow(dense_win, cv2.WINDOW_AUTOSIZE)
-        elif key == ord('u') and isinstance(cam, StereoCamera):
-            rectified = not rectified
-            cam.set_capture_mode(CaptureMode.RECTIFIED if rectified else CaptureMode.UNRECTIFIED)
-            print(f"Rectified: {rectified}")
-        elif key == ord('l') and isinstance(cam, StereoCamera):
+        elif key == ord('l') and isinstance(cam, RealSenseStereoCamera):
             laser_on = not laser_on
             cam.set_laser_mode(LaserMode.ON if laser_on else LaserMode.OFF)
             print(f"Laser: {laser_on}")
@@ -123,11 +111,13 @@ def kitti():
     calibration = StereoCalibration.from_kitti(cam)
     return cam, calibration
 
+
 def realsense():
-    cam = StereoCamera(CaptureMode.RECTIFIED)
+    cam = RealSenseStereoCamera()
     calibration = StereoCalibration.from_realsense(cam)
     return cam, calibration
 
+
 if __name__ == "__main__":
-    #run_stereo_lab(*kitti())
+    # run_stereo_lab(*kitti())
     run_stereo_lab(*realsense())
