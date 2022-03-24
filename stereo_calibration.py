@@ -3,6 +3,7 @@ import numpy as np
 from common_lab_utils import (Size, StereoPair)
 from kitti_interface import (KittiCamera)
 from real_sense_stereo_camera import (RealSenseStereoCamera, CameraIndex)
+from pylie import SO3, SE3
 
 
 class StereoCalibration:
@@ -114,9 +115,9 @@ class StereoCalibration:
         return self._d_right
 
     @property
-    def pose(self):
-        """The rotation and translation of the left camera relative to the right camera."""
-        return self._R.T, -self._R * self._t
+    def pose_left_right(self):
+        """The rotation and translation of the right camera relative to the left camera."""
+        return SE3((SO3(self._R), self._t))
 
     def _compute_rectification_mapping(self):
         img_size = self.img_size

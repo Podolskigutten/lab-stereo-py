@@ -3,7 +3,7 @@ import numpy as np
 import timeit
 
 from common_lab_utils import (CvStereoMatcherWrap, Size, StereoPair, StereoMatchingResult, hnormalized, homogeneous)
-from visualisation import (visualise_dense, visualize_depths, visualize_matches)
+from visualisation import (Scene3D, visualise_dense, visualise_depths, visualise_matches)
 from kitti_interface import KittiCamera
 from stereo_calibration import StereoCalibration
 from real_sense_stereo_camera import (RealSenseStereoCamera, LaserMode)
@@ -38,6 +38,8 @@ def run_stereo_lab(cam, calibration):
 
     cv2.namedWindow(matching_win, cv2.WINDOW_AUTOSIZE)
     cv2.namedWindow(depth_win, cv2.WINDOW_AUTOSIZE)
+
+    viewer_3d = Scene3D(calibration)
 
     # The main loop.
     while True:
@@ -80,13 +82,16 @@ def run_stereo_lab(cam, calibration):
             vis_dense = visualise_dense(dense_depth, dense_matcher.min_depth, dense_matcher.max_depth, duration_dense)
             cv2.imshow(dense_win, vis_dense)
 
-        # Visualize matched point correspondences
-        match_image = visualize_matches(stereo_rectified, match_result, duration_rectification, duration_matching)
+        # Visualise matched point correspondences
+        match_image = visualise_matches(stereo_rectified, match_result, duration_rectification, duration_matching)
         cv2.imshow(matching_win, match_image)
 
-        # Visualize sparse depth in meters for each point.
-        vis_depth = visualize_depths(stereo_rectified, sparse_pts_left, sparse_depths)
+        # Visualise sparse depth in meters for each point.
+        vis_depth = visualise_depths(stereo_rectified, sparse_pts_left, sparse_depths)
         cv2.imshow(depth_win, vis_depth)
+
+        # Visualise point cloude in 3D.
+        viewer_3d.update(pts_3d)
 
         key = cv2.waitKey(1)
         if key == ord('q'):
