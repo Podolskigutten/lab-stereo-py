@@ -43,7 +43,7 @@ class Scene3D:
         if self._point_cloud_actors is not None:
             self._plotter.remove_actor(self._point_cloud_actors, render=False)
 
-        if len(pts_3d) >= 0:
+        if len(pts_3d) > 0:
             # Render new visualisation.
             point_cloud = pv.PolyData(pts_3d)
             point_cloud['Depth'] = pts_3d[:, -1]
