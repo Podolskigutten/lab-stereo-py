@@ -18,17 +18,25 @@ Please start the lab by going to the [first step](lab-guide/1-get-an-overview.md
 - Clone the repo into the directory `~/tek5030`
 - Run the setup script `setup_jetson.bash` which 
   - creates a "venv"
+  - installs a lot of stuff
   - downloads a precompiled VTK-wheel
+  - download precompiled pyrealsense2
   - installs requirements from `requirements-jetson.txt`
 - Open the editor of your choice
 
 ```bash
 mkdir -p ~/tek5030
 cd ~/tek5030
-git clone https://github.com/tek5030/lab-pose-estimation-py.git
-cd lab-pose-estimation-py
+git clone https://github.com/tek5030/lab-stereo-py.git
+cd lab-stereo-py
 ./setup_jetson.bash
 
 # source venv/bin/activate
-# python lab_pose_estimation.py
+## connect camera
+# python lab_pose_stereo.py
 ```
+
+:constructin: If for some reason things doesn't work, 
+- try to run the script `./install_librealsense.bash`
+- try to disconnect the camera and reconnect it
+- `sudo reboot` the Jetson
