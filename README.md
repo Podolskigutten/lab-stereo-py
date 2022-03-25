@@ -1,4 +1,4 @@
-# Lab 7: Stereo processing
+# Lab: Stereo processing
 In this lab we will experiment with stereo processing.
 
 ![Ideal stereo geometry](lab-guide/img/ideal_stereo_geometry.png)
@@ -36,7 +36,7 @@ cd lab-stereo-py
 # python lab_pose_stereo.py
 ```
 
-:constructin: If for some reason things doesn't work, 
+:construction: If for some reason things doesn't work, 
 - try to run the script `./install_librealsense.bash`
 - try to disconnect the camera and reconnect it
 - `sudo reboot` the Jetson
