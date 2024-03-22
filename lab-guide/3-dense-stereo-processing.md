@@ -9,7 +9,7 @@ Your task is again to compute the correct `depths` in meters:
 
 ## Further experiments
 - Play around with the parameters for the dense stereo matcher.
-  See the [cv::StereoSGBM Class Reference](https://docs.opencv.org/4.5.5/d2/d85/classcv_1_1StereoSGBM.html#adb7a50ef5f200ad9559e9b0e976cfa59).
+  See the [cv::StereoSGBM Class Reference](https://docs.opencv.org/4.9.0/d2/d85/classcv_1_1StereoSGBM.html#adb7a50ef5f200ad9559e9b0e976cfa59).
 - Activate the projector. 
   How does it influence the stereo processing?
 - Compute 3D points for the dense result and show them instead of the sparse point cloud!
