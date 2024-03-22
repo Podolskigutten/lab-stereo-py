@@ -47,6 +47,8 @@ class KittiCamera:
         if not success_right:
             print("End of right camera sequence")
 
+        if not (success_left and success_right):
+            return None
         self._frame_count += 1
 
         return StereoPair(left_frame, right_frame)

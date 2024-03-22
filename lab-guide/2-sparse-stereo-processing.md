@@ -26,7 +26,15 @@ if __name__ == "__main__":
 ```
 
 If you want to use the Kitti dataset, change the last line to `run_stereo_lab(*kitti())` and provide the dataset paths on the command line.
-If you don't know how to do that, just hard code the paths instead.
+In PyCharm, go to <kbd>Edit Configurations...</kbd> and enter the arguments in the field "Script parameters"
+
+<img src="img/pycharm-edit-configuration.png" width="280" alt="Edit Configurations..."/>
+
+Alternatively, just hard code the paths instead.
+```py
+# Read paths from the command line arguments.
+cam = KittiCamera("2011_09_28/2011_09_28_drive_0016_extract/", "2011_09_28_calib/2011_09_28/")
+```
 
 ## 2. Improve point correspondences
 Go to `SparseStereoMatcher._extract_good_matches()` in [lab_stereo.py](../lab_stereo.py).

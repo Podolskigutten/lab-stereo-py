@@ -45,6 +45,8 @@ def run_stereo_solution(cam, calibration):
     while True:
         # Grab stereo images
         stereo_raw = cam.get_stereo_pair()
+        if stereo_raw is None:
+            break
 
         # Rectify images.
         start = timeit.default_timer()
