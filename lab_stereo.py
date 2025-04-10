@@ -258,7 +258,7 @@ def kitti():
     import sys
 
     # Read paths from the command line arguments.
-    cam = KittiCamera(*sys.argv[1:3])
+    cam = KittiCamera("images/2011_09_28_drive_0045_extract/, calib ")
 
     calibration = StereoCalibration.from_kitti(cam)
     return cam, calibration
@@ -272,4 +272,4 @@ def realsense():
 
 if __name__ == "__main__":
     # TODO 1: Choose stereo source
-    run_stereo_lab(*realsense())
+    run_stereo_lab(*kitti())
